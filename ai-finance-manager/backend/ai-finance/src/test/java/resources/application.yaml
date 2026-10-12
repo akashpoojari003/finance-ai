@@ -1,0 +1,40 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:ai-finance_test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.H2Dialect
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: Asia/Kolkata
+
+  mail:
+    host: localhost
+    port: 3025
+    username: ${MAIL_USER:test@example.com}
+    password: ${MAIL_APP_PASSWORD:test-dummy}
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+            required: false
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:dGVzdC1vbmx5LWR1bW15LWp3dC1zZWNyZXQtMzItYnl0ZXMtbWluLWxlbmd0aA==}
+    access-minutes: 15
+    refresh-days: 7
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
