@@ -1,0 +1,59 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+# Editor-based HTTP Client requests
+/httpRequests/
+# Ignored default folder with query files
+/queries/
+# Datasource local storage ignored files
+/dataSources/
+/dataSources.local.xml
+
+# ---------- Java / Maven ----------
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.log
+hs_err_pid*
+.mvn/wrapper/maven-wrapper.jar
+
+# ---------- Node / Vite ----------
+node_modules/
+dist/
+dist-ssr/
+.vite/
+.eslintcache
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+coverage/
+
+# ---------- IDE / OS ----------
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.project
+.classpath
+.factorypath
+*.swp
+.DS_Store
+Thumbs.db
+
+# ---------- Env / secrets ----------
+.env
+.env.*
+!.env.example
+!infra/.env.example
+*.pem
+*.key
+
+# ---------- Docker / local data ----------
+infra/postgres-data/
+infra/grafana-data/
+infra/prometheus-data/
