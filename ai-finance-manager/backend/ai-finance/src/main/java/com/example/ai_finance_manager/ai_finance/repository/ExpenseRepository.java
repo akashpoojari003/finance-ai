@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ExpenseRepository extends JpaRepository<Expense, Long> {
@@ -68,4 +69,6 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
     List<DailyTotal> sumByDay(@Param("userId") Long userId,
                               @Param("startDate") LocalDate startDate,
                               @Param("endDate") LocalDate endDate);
+
+    Optional<Expense> findByIdAndUserId(Long id, Long userId);
 }

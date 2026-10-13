@@ -51,6 +51,21 @@ app:
   cors:
     origins: ${CORS_ORIGINS:http://localhost:5173}
 
+  gemini-key: ${GEMINI_API_KEY:}
+  gemini:
+    model: ${GEMINI_MODEL:gemini-2.5-flash}
+    url: https://generativelanguage.googleapis.com/v1beta/models
+
+  cron-token: ${CRON_TOKEN:}
+  alerts:
+    scheduler-enabled: ${ALERTS_SCHEDULER_ENABLED:true}
+  whatsapp:
+    enabled: ${WHATSAPP_ENABLED:false}
+  twilio:
+    sid: ${TWILIO_SID:}
+    token: ${TWILIO_TOKEN:}
+    from: ${TWILIO_FROM:}
+
 management:
   endpoints:
     web:
