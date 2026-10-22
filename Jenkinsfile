@@ -14,7 +14,7 @@ pipeline {
     }
 
     environment {
-        BACKEND_DIR  = 'backend'
+        BACKEND_DIR  = 'backend/ai-finance'
         FRONTEND_DIR = 'frontend/finance-ai-manager'
         IMAGE_NAME   = 'financeai-api'
         // EDIT: deployment target
