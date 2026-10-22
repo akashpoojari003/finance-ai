@@ -14,8 +14,8 @@ pipeline {
     }
 
     environment {
-        BACKEND_DIR  = 'backend/ai-finance'
-        FRONTEND_DIR = 'frontend/finance-ai-manager'
+        BACKEND_DIR  = 'ai-finance-manager/backend/ai-finance'
+        FRONTEND_DIR = 'ai-finance-manager/frontend/finance-ai-manager'
         IMAGE_NAME   = 'financeai-api'
         // EDIT: deployment target
         DEPLOY_HOST  = 'deploy@your-server.example.com'
@@ -27,12 +27,13 @@ pipeline {
             steps {
                 script { env.CURRENT_STAGE = env.STAGE_NAME }
                 dir(env.BACKEND_DIR) {
+                    sh 'test -f pom.xml || { echo "pom.xml not found in $(pwd)"; ls -la; exit 1; }'
                     sh 'mvn -B -ntp verify'
                 }
             }
             post {
                 always {
-                    junit testResults: 'backend/target/surefire-reports/*.xml', allowEmptyResults: true
+                    junit testResults: "${env.BACKEND_DIR}/target/surefire-reports/*.xml", allowEmptyResults: true
                 }
             }
         }
@@ -41,6 +42,7 @@ pipeline {
             steps {
                 script { env.CURRENT_STAGE = env.STAGE_NAME }
                 dir(env.FRONTEND_DIR) {
+                    sh 'test -f package.json || { echo "package.json not found in $(pwd)"; ls -la; exit 1; }'
                     sh 'npm ci --no-audit --no-fund'
                     sh 'npm run build'
                 }
