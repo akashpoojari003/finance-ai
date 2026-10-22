@@ -1,0 +1,12 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: ai_finance_manager-api
+    metrics_path: /actuator/prometheus
+    authorization:
+      type: Bearer
+      credentials_file: /tmp/scrape_token
+    static_configs:
+      - targets: ["api:8081"]

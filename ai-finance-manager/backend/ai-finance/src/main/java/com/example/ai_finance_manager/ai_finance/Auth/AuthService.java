@@ -19,6 +19,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import io.micrometer.core.instrument.MeterRegistry;
+import org.springframework.security.core.AuthenticationException;
 
 import java.util.Locale;
 
@@ -31,6 +33,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final CustomUserDetailsService userDetailsService;
+    private final MeterRegistry meterRegistry;
 
     public AuthResponse signup(SignupRequest request) {
         String email = normalize(request.email());
@@ -57,11 +60,23 @@ public class AuthService {
 
     public AuthResponse login(LoginRequest request) {
         String email = normalize(request.email());
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(email, request.password()));
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new BadCredentialsException("Invalid email or password"));
-        return buildResponse(user);
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(email, request.password()));
+        } catch (AuthenticationException ex) {
+            meterRegistry.counter("auth.login.failed").increment();
+            throw ex;
+        }
+
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (user == null) {
+            meterRegistry.counter("auth.login.failed").increment();
+            throw new BadCredentialsException("Invalid email or password");
+        }
+
+        AuthResponse response = buildResponse(user);
+        meterRegistry.counter("auth.login.success").increment();
+        return response;
     }
 
     public AuthResponse refresh(RefreshRequest request) {

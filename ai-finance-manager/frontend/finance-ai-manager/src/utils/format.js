@@ -59,3 +59,21 @@ export function shortDate(isoDate) {
         timeZone: 'UTC',
     });
 }
+
+export function todayIST() {
+    return new Intl.DateTimeFormat('en-CA', {
+        timeZone: IST,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    }).format(new Date());
+}
+
+export function longDate(isoDate) {
+    return new Date(`${isoDate}T00:00:00Z`).toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        timeZone: 'UTC',
+    });
+}

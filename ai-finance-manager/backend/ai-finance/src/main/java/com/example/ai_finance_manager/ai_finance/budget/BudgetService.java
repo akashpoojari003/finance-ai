@@ -40,4 +40,13 @@ public class BudgetService {
             throw new ConflictException("Budget was modified concurrently, please retry");
         }
     }
+
+    @Transactional(readOnly = true)
+    public BudgetResponse get(String month) {
+        User user = currentUserProvider.getCurrentUser();
+        String yearMonth = MonthParser.parse(month).toString();
+        return budgetRepository.findByUserIdAndMonth(user.getId(), yearMonth)
+                .map(BudgetResponse::from)
+                .orElse(new BudgetResponse(yearMonth, null));
+    }
 }

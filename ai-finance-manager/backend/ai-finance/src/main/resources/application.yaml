@@ -40,7 +40,7 @@ spring:
           writetimeout: 5000
 
 server:
-  port: 8080
+  port: 8081
 
 app:
   jwt:
@@ -66,7 +66,12 @@ app:
     token: ${TWILIO_TOKEN:}
     from: ${TWILIO_FROM:}
 
+  prometheus-token: ${PROMETHEUS_TOKEN:}
+
 management:
+  health:
+    mail:
+      enabled: false
   endpoints:
     web:
       exposure:
@@ -77,4 +82,10 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
-
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: 0.5,0.95,0.99
+      slo:
+        http.server.requests: 100ms,300ms,500ms,1s

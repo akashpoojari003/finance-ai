@@ -14,6 +14,7 @@ export function AuthProvider({ children }) {
         window.addEventListener(AUTH_UPDATED_EVENT, syncFromStorage);
         window.addEventListener(AUTH_LOGOUT_EVENT, handleLogout);
         window.addEventListener('storage', syncFromStorage);
+
         return () => {
             window.removeEventListener(AUTH_UPDATED_EVENT, syncFromStorage);
             window.removeEventListener(AUTH_LOGOUT_EVENT, handleLogout);
@@ -29,7 +30,11 @@ export function AuthProvider({ children }) {
 
     const login = useCallback(
         async (email, password) => {
-            const data = await api.post('/api/auth/login', { email, password }, { auth: false });
+            const data = await api.post(
+                '/api/auth/login',
+                { email, password },
+                { auth: false }
+            );
             persist(data);
         },
         [persist]
@@ -37,7 +42,11 @@ export function AuthProvider({ children }) {
 
     const signup = useCallback(
         async (form) => {
-            const data = await api.post('/api/auth/signup', form, { auth: false });
+            const data = await api.post(
+                '/api/auth/signup',
+                form,
+                { auth: false }
+            );
             persist(data);
         },
         [persist]
@@ -48,6 +57,23 @@ export function AuthProvider({ children }) {
         setAuth(null);
     }, []);
 
+    // ADD THIS HERE
+    const updateUser = useCallback((patch) => {
+        const current = loadAuth();
+        if (!current) return;
+
+        const next = {
+            ...current,
+            user: {
+                ...current.user,
+                ...patch,
+            },
+        };
+
+        saveAuth(next);
+        setAuth(next);
+    }, []);
+
     const value = useMemo(
         () => ({
             user: auth?.user ?? null,
@@ -56,15 +82,24 @@ export function AuthProvider({ children }) {
             login,
             signup,
             logout,
+            updateUser,
         }),
-        [auth, login, signup, logout]
+        [auth, login, signup, logout, updateUser]
     );
 
-    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+    return (
+        <AuthContext.Provider value={value}>
+            {children}
+        </AuthContext.Provider>
+    );
 }
 
 export function useAuth() {
     const ctx = useContext(AuthContext);
-    if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
+
+    if (!ctx) {
+        throw new Error('useAuth must be used inside AuthProvider');
+    }
+
     return ctx;
 }

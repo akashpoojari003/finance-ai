@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+    <springProperty
+            scope="context"
+            name="appName"
+            source="spring.application.name"
+            defaultValue="financeai"/>
+
+    <springProperty
+            scope="context"
+            name="logDestination"
+            source="app.logging.tcp-destination"
+            defaultValue="fluent-bit:5170"/>
+
+    <springProfile name="!jsonlogs">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="jsonlogs">
+        <appender name="FLUENT"
+                  class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+            <destination>${logDestination}</destination>
+            <keepAliveDuration>5 minutes</keepAliveDuration>
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <customFields>{"service":"${appName}"}</customFields>
+            </encoder>
+        </appender>
+
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FLUENT"/>
+        </root>
+    </springProfile>
+</configuration>

@@ -40,6 +40,9 @@ public class SecurityConfig {
     @Value("${app.cors.origins}")
     private String corsOrigins;
 
+    @Value("${app.prometheus-token:}")
+    private String prometheusToken;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -58,7 +61,8 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/prometheus").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .addFilterBefore(new JwtAuthFilter(jwtService, userDetailsService),
-                        UsernamePasswordAuthenticationFilter.class);
+                        UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(new PrometheusScrapeFilter(prometheusToken), JwtAuthFilter.class);
         return http.build();
     }
 

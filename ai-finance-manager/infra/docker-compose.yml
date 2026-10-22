@@ -1,0 +1,134 @@
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: financeai
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      TZ: Asia/Kolkata
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    image: ${DOCKERHUB_USER}/financeai-api:${API_TAG:-latest}
+    build:
+      context: ../backend/ai-finance
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/financeai
+      SERVER_PORT: 8081
+      SPRING_PROFILES_ACTIVE: jsonlogs
+      LOG_TCP_DESTINATION: fluent-bit:5170
+      TZ: Asia/Kolkata
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # no published port: reached via frontend /api and by Prometheus on the compose network
+    expose:
+      - "8081"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8081/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+
+
+  frontend:
+    build:
+      context: ../frontend/finance-ai-manager
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    restart: unless-stopped
+    entrypoint:
+      - /bin/sh
+      - -c
+      - >-
+        echo -n "$$PROMETHEUS_TOKEN" > /tmp/scrape_token &&
+        exec /bin/prometheus
+        --config.file=/etc/prometheus/prometheus.yml
+        --storage.tsdb.path=/prometheus
+        --storage.tsdb.retention.time=15d
+    environment:
+      PROMETHEUS_TOKEN: ${PROMETHEUS_TOKEN:?set PROMETHEUS_TOKEN in infra/.env}
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "127.0.0.1:9090:9090"
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?set GRAFANA_ADMIN_PASSWORD in infra/.env}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      TZ: Asia/Kolkata
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+      - loki
+    ports:
+      - "127.0.0.1:3000:3000"
+
+  loki:
+    image: grafana/loki:3.2.0
+    restart: unless-stopped
+    user: "0"
+    volumes:
+      - loki-data:/tmp/loki
+    ports:
+      - "127.0.0.1:3100:3100"
+
+  fluent-bit:
+    image: fluent/fluent-bit:3.2
+    restart: unless-stopped
+    command: ["/fluent-bit/bin/fluent-bit", "-c", "/fluent-bit/etc/custom/fluent-bit.conf"]
+    volumes:
+      - ./fluent-bit:/fluent-bit/etc/custom:ro
+    depends_on:
+      - loki
+    ports:
+      - "127.0.0.1:5170:5170"
+
+  jenkins:
+    image: jenkins/jenkins:lts-jdk21
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Kolkata
+      JAVA_OPTS: -Duser.timezone=Asia/Kolkata
+    volumes:
+      - jenkins-home:/var/jenkins_home
+      # Add /var/run/docker.sock only if pipelines must build images (root-equivalent access)
+    ports:
+      - "127.0.0.1:8080:8080"
+
+
+
+volumes:
+  postgres-data:
+  prometheus-data:
+  grafana-data:
+  loki-data:
+  jenkins-home:

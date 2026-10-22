@@ -10,6 +10,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 
 @Slf4j
 @Service
@@ -42,11 +45,23 @@ public class GeminiCategoryService implements CategoryService {
     }
 
     private final GeminiClient geminiClient;
+    private final Timer latencyTimer;
+    private final Counter fallbackCounter;
+    private final MeterRegistry meterRegistry;
     private final LruCache<String, String> cache = new LruCache<>(1000);
 
-    public GeminiCategoryService(GeminiClient geminiClient) {
+    public GeminiCategoryService(GeminiClient geminiClient, MeterRegistry meterRegistry) {
         this.geminiClient = geminiClient;
+        this.meterRegistry = meterRegistry;
+        this.latencyTimer = Timer.builder("ai.category.latency")
+                .description("Latency of Gemini category suggestions")
+                .publishPercentileHistogram()
+                .register(meterRegistry);
+        this.fallbackCounter = Counter.builder("ai.category.fallback")
+                .description("Category suggestions answered by keyword rules instead of Gemini")
+                .register(meterRegistry);
     }
+
 
     @Override
     public String suggest(String note) {
@@ -62,6 +77,7 @@ public class GeminiCategoryService implements CategoryService {
 
         String safeNote = sanitize(key);
         if (geminiClient.isConfigured() && !safeNote.isBlank()) {
+            Timer.Sample sample = Timer.start(meterRegistry);
             try {
                 String answer = validate(geminiClient.generate(buildPrompt(safeNote), 8));
                 if (answer != null) {
@@ -71,8 +87,11 @@ public class GeminiCategoryService implements CategoryService {
             } catch (Exception ex) {
                 log.warn("Gemini category call failed, using keyword rules: {}",
                         ex.getClass().getSimpleName());
+            } finally {
+                sample.stop(latencyTimer);
             }
         }
+        fallbackCounter.increment();
         return keywordCategory(key);
     }
 
