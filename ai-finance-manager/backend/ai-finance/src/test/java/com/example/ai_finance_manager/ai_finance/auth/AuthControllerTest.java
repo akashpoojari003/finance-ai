@@ -16,9 +16,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(properties = "app.alerts.scheduler-enabled=false")
+import com.example.ai_finance_manager.ai_finance.IntegrationTest;
+
+@IntegrationTest
 @AutoConfigureMockMvc
-@ActiveProfiles("test")
 @Transactional
 class AuthControllerTest {
 
