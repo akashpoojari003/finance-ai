@@ -1,0 +1,4 @@
+
+/ai-finance-manager/infra/.env
+/ai-finance-manager/infra/.env.*
+!/ai-finance-manager/infra/.env.example
