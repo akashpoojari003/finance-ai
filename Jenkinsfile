@@ -14,12 +14,13 @@ pipeline {
     }
 
     environment {
-        BACKEND_DIR  = 'ai-finance-manager/backend/ai-finance'
-        FRONTEND_DIR = 'ai-finance-manager/frontend/finance-ai-manager'
-        IMAGE_NAME   = 'financeai-api'
-        // EDIT: deployment target
-        DEPLOY_HOST  = 'deploy@your-server.example.com'
-        DEPLOY_DIR   = '/opt/ai-finance-manager/infra'
+        BACKEND_DIR    = 'ai-finance-manager/backend/ai-finance'
+        FRONTEND_DIR   = 'ai-finance-manager/frontend/finance-ai-manager'
+        IMAGE_NAME     = 'financeai-api'
+        // Set to 'true' only after you have a server, a valid deploy-ssh key and the values below
+        DEPLOY_ENABLED = 'false'
+        DEPLOY_HOST    = 'deploy@your-server.example.com'
+        DEPLOY_DIR     = '/opt/ai-finance-manager/infra'
     }
 
     stages {
@@ -80,9 +81,12 @@ pipeline {
 
         stage('Deploy') {
             when {
-                anyOf {
-                    branch 'main'
-                    expression { env.GIT_BRANCH == 'origin/main' }
+                allOf {
+                    anyOf {
+                        branch 'main'
+                        expression { env.GIT_BRANCH == 'origin/main' }
+                    }
+                    expression { env.DEPLOY_ENABLED == 'true' }
                 }
             }
             steps {
