@@ -117,12 +117,13 @@ services:
       context: ./jenkins
     image: financeai-jenkins:local
     restart: unless-stopped
+    user: root
     environment:
       TZ: Asia/Kolkata
       JAVA_OPTS: -Duser.timezone=Asia/Kolkata
     volumes:
       - jenkins-home:/var/jenkins_home
-      # Add /var/run/docker.sock only if pipelines must build images (root-equivalent access)
+      - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - "127.0.0.1:8080:8080"
 
