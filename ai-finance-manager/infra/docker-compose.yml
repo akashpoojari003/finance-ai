@@ -113,7 +113,9 @@ services:
       - "127.0.0.1:5170:5170"
 
   jenkins:
-    image: jenkins/jenkins:lts-jdk21
+    build:
+      context: ./jenkins
+    image: financeai-jenkins:local
     restart: unless-stopped
     environment:
       TZ: Asia/Kolkata
